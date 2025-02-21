@@ -4,6 +4,12 @@ import { Label } from "./components/ui/label";
 import { Input } from "./components/ui/input";
 import { Checkbox } from "./components/ui/checkbox";
 import { Separator } from "./components/ui/separator";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./components/ui/accordion"
 
 function App() {
   const [grossAmount, setGrossAmount] = useState("");
@@ -11,16 +17,18 @@ function App() {
   const [settlementWithSpouse, setSettlementWithSpouse] = useState(false);
   const [netAmount, setNetAmount] = useState<number | null>(null);
   const [actualDeduction, setActualDeduction] = useState<number | null>(null);
+  const [relief, setRelief] = useState("300");
 
   function handleCalculate(e: React.FormEvent) {
     e.preventDefault();
 
     const grossValue = parseFloat(grossAmount.replace(",", ".")) || 0;
-    const ratioValue = parseFloat(ratio) || 0;
+    const ratioValue = parseFloat(ratio.replace(",", ".")) || 0;
     const baseAmount = grossValue + grossValue * (ratioValue / 100);
     const deductionAmount = baseAmount * 0.21;
-    const relief = settlementWithSpouse ? 600 : 300;
-    const actualDeductionValue = (deductionAmount - relief) < 0 ? 0 : deductionAmount - relief;
+    const reliefAmount = settlementWithSpouse ? 2 * parseFloat(relief.replace(",", ".")) : parseFloat(relief.replace(",", "."));
+    console.log(reliefAmount, relief);
+    const actualDeductionValue = (deductionAmount - reliefAmount) < 0 ? 0 : deductionAmount - reliefAmount;
     
     setActualDeduction(actualDeductionValue)
     setNetAmount(Number((baseAmount - actualDeductionValue).toFixed(2)));
@@ -63,18 +71,42 @@ function App() {
               />
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="spouse"
-              checked={settlementWithSpouse}
-              onCheckedChange={() => setSettlementWithSpouse(!settlementWithSpouse)}
-            />
-            <label
-              htmlFor="spouse"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Rozliczenie z małżonkiem
-            </label>
+          <div className="flex items-center space-x-2 md:w-2/3full">
+            <div className="self-start" style={{marginTop: "15px"}}>
+              <Checkbox
+                id="spouse"
+                checked={settlementWithSpouse}
+                onCheckedChange={() => setSettlementWithSpouse(!settlementWithSpouse)}
+              />
+            </div>
+            <Accordion style={{width: "259px"}} className="w-full" type="single" collapsible>
+              <AccordionItem value="item-1">
+                <AccordionTrigger>
+                  <label
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" style={{width:"99%", padding: "1px 0 0 1px"}}
+                  >
+                    Rozliczenie z małżonkiem
+                  </label>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div 
+                    className="grid grid-cols-1 md:grid-cols-2 gap-2" 
+                    style={{width:"99%", padding: "1px 0 0 1px"}}
+                  >
+                    <Label htmlFor="relief" className="md:flex md:items-center md:content-center">
+                      Ustaw kwotę ulgi:
+                    </Label>
+                    <Input
+                      type="text"
+                      id="relief"
+                      placeholder="- zł"
+                      value={relief}
+                      onChange={(e) => {handleNumberInput(e.target.value, setRelief)}}
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
           <div className="mt-4 flex justify-center">
             <Button type="submit" className="w-40">
